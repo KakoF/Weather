@@ -1,0 +1,60 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ProtectedSessionStorage sessionStorage
+<div class="page">
+    <main>
+        <div class="top-row px-4">
+
+            @if (string.IsNullOrEmpty(token))
+            {
+                <a href="signin">Signin</a>
+                <a href="signup">Signup</a>
+
+            }
+            else
+            {
+                <a href="#">Logout</a>
+            }
+
+
+        </div>
+        <article class="content px-4">
+            @Body
+           
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private AuthenticationState? authState;
+    private string token;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var teste = "";
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            StateHasChanged();
+        }
+    }
+
+    public async Task VerifyToken()
+    {
+        var result = await sessionStorage.GetAsync<string>("authToken");
+        token = result.Value;
+    }
+}
+
+

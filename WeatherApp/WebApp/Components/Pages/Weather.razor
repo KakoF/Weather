@@ -1,0 +1,162 @@
+﻿@page "/"
+@using Blazored.Toast.Configuration
+@using Domain.Models
+@using Infrastructure.Clients
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using WebApp.Providers
+@inject IToastService toastService
+@inject CustomAuthenticationStateProvider AuthenticationStateProvider
+@inject IWeatherApiClient Client
+@inject ProtectedSessionStorage sessionStorage
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<BlazoredToasts Position="ToastPosition.BottomRight"
+				Timeout="5" />
+
+<PageTitle>Climas</PageTitle>
+
+<h1>Climas</h1>
+
+<div class="mb-3">
+	<InputText @bind-Value="searchText" placeholder="Digite aqui a localização" class="form-control" />
+</div>
+<button @onclick="Search" class="btn btn-primary mb-5">Buscar</button>
+@if (location != null)
+{
+	<div class="col-12">
+		<Card Class="mb-3">
+			<CardBody>
+				<CardTitle>@location.Name</CardTitle>
+				<CardSubTitle Class="mb-2 text-muted">@location!.Weather![0].Main</CardSubTitle>
+				<CardText>@location!.Weather![0].Description</CardText>
+				<Button Color="ButtonColor.Primary" disabled="@isDisabled" @onclick="FavoriteWeather" Type="ButtonType.Button">Favoritar</Button>
+			</CardBody>
+		</Card>
+	</div>
+}
+<hr />
+<h3>Favoritos</h3>
+	<div class="row">
+		@foreach (var favorite in favorites)
+		{
+		<div class="col-4">
+				<Card Class="mb-3">
+					<CardBody>
+						<CardTitle>@favorite.Favorite.Name</CardTitle>
+						<CardSubTitle Class="mb-2 text-muted">@favorite!.Favorite!.Weather![0].Main</CardSubTitle>
+						<CardText>@favorite!.Favorite!.Weather![0].Description</CardText>
+						<Button Color="ButtonColor.Danger" @onclick="() => UnFavoriteWeather(favorite.Id)" Type="ButtonType.Button">Remover</Button>
+					</CardBody>
+				</Card>
+			</div>
+
+
+		}
+</div>
+
+@code {
+	private string? searchText;
+	private IEnumerable<FavoriteWeatherModel> favorites = new List<FavoriteWeatherModel>();
+	private WeatherModel? location;
+	protected bool isDisabled { get; set; } = true;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			var token = await VerifyToken();
+			//var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+			if (!string.IsNullOrEmpty(token))
+			{
+				isDisabled = false;
+				favorites = await Client.GetFavoriteAsync($"Bearer {token}");
+			}
+
+			StateHasChanged();
+		}
+	}
+
+	public async Task<string?> VerifyToken()
+	{
+		var result = await sessionStorage.GetAsync<string>("authToken");
+		return result.Value;
+
+	}
+
+	private async Task FavoriteWeather()
+	{
+		if (location == null)
+			return;
+
+		try
+		{
+			var token = await VerifyToken();
+			await Client.PostFavoriteAsync(location.Name!, $"Bearer {token}");
+			favorites = await Client.GetFavoriteAsync($"Bearer {token}");
+			toastService.ShowSuccess("Localização favoritada");
+		}
+		catch
+		{
+			toastService.ShowError("Localização não encontrada");
+		}
+
+	}
+
+	private async Task UnFavoriteWeather(string id)
+	{
+		try
+		{
+			var token = await VerifyToken();
+			await Client.DeleteFavoriteAsync(id, $"Bearer {token}");
+			favorites = await Client.GetFavoriteAsync($"Bearer {token}");
+			toastService.ShowSuccess("Localização removida");
+		}
+		catch
+		{
+			toastService.ShowError("Localização não encontrada");
+		}
+	}
+
+	private async Task Search()
+	{
+		try
+		{
+			location = await Client.GetLocationAsync(searchText);
+		}
+		catch
+		{
+			toastService.ShowError("Localização não encontrada");
+		}
+
+	}
+}
+
+@*
+@code {
+    private WeatherForecast[]? forecasts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        await Task.Delay(500);
+
+        var startDate = DateOnly.FromDateTime(DateTime.Now);
+        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
+        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        {
+            Date = startDate.AddDays(index),
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = summaries[Random.Shared.Next(summaries.Length)]
+        }).ToArray();
+    }
+
+    private class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+} *@
