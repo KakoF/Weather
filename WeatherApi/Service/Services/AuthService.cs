@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces.Repository;
+﻿using Domain.Exceptions;
+using Domain.Interfaces.Repository;
 using Domain.Interfaces.Services;
 using Domain.Models;
 using Domain.Requests.Auth;
@@ -25,10 +26,9 @@ namespace Service.Services
 		{
 			var user = await _repository.GetAsync(request.Email, request.Password);
 			if (user == null)
-				return default;
+				throw new DomainException("Usuário não encontrado", 404);
 
-			var token = GenerateIdentityToken(user);
-			return token;
+			return GenerateIdentityToken(user);
 		}
 
 		public async Task<string> SignupAsync(SignupRequest request)
@@ -52,7 +52,7 @@ namespace Service.Services
 						new Claim(JwtRegisteredClaimNames.UniqueName, user.Email),
 				  }
 				),
-				Expires = DateTime.UtcNow.AddMinutes(_signinConfigurations.ExpiryMinutes),
+				//Expires = DateTime.UtcNow.AddMinutes(_signinConfigurations.ExpiryMinutes),
 				Issuer = _signinConfigurations.Issuer,
 				Audience = _signinConfigurations.Audience,
 				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

@@ -16,14 +16,14 @@ namespace WebApi.Controllers
 
 		[HttpPost]
 		[Route("Signup")]
-		public async Task<string> Signup([FromBody] SignupRequest request)
+		public async Task<string> SignupAsync([FromBody] SignupRequest request)
 		{
 			return await _service.SignupAsync(request);
 		}
 
 		[HttpPost]
 		[Route("Signin")]
-		public async Task<string?> GetAsync([FromBody] SigninRequest request)
+		public async Task<string?> SigninAsync([FromBody] SigninRequest request)
 		{
 			return await _service.SigninAsync(request);
 		}

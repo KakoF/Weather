@@ -42,6 +42,7 @@ namespace WebApi.Extensions
 
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+			builder.Services.AddScoped<IWeatherService, WeatherService>();
 			builder.Services.AddScoped<IUserRepository, UserRepository>();
 			builder.Services.AddScoped<IFavoriteWeatherRepository, FavoriteWeatherRepository>();
 		}
@@ -62,7 +63,7 @@ namespace WebApi.Extensions
 				{
 					ValidateIssuer = true,
 					ValidateAudience = true,
-					ValidateLifetime = true,
+					ValidateLifetime = false,
 					ValidateIssuerSigningKey = true,
 					ValidIssuer = jwtSettings.Issuer,
 					ValidAudience = jwtSettings.Audience,

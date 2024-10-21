@@ -1,5 +1,6 @@
 using Infrastructure.DbContext;
 using WebApi.Extensions;
+using WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware(typeof(ErrorHandlingMiddleware));
 
 app.UseAuthorization();
 

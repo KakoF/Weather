@@ -1,5 +1,5 @@
-﻿using Domain.Models;
-using Infrastructure.Clients;
+﻿using Domain.Interfaces.Services;
+using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -8,19 +8,18 @@ namespace WebApi.Controllers
 	[Route("[controller]")]
 	public class WeatherController : ControllerBase
 	{
+		private readonly IWeatherService _service;
 
-		private readonly IOpenWeatherMapClient _client;
-
-		public WeatherController(IOpenWeatherMapClient client)
+		public WeatherController(IWeatherService service)
 		{
-			_client = client;
+			_service = service;
 		}
 
 		[HttpGet]
 		[Route("Location/{location}")]
 		public async Task<WeatherModel> GetAsync(string location)
 		{
-			return await _client.GetWeatherAsync(location);
+			return await _service.GetAsync(location);
 		}
 	}
 }
